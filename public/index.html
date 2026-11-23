@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pingado — laboratório web</title>
+    <link rel="stylesheet" href="/a.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <nav class="topbar" aria-label="Principal">
+        <a class="brand" href="/" aria-label="Pingado, inicio">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>pingado</span>
+        </a>
+        <span class="env"><i></i> ambiente local</span>
+      </nav>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">servidor HTTP / experimento 01</p>
+          <h1>Seu site está<br /><em>conversando.</em></h1>
+          <p class="lede">
+            Uma pagina pequena para ver o servidor de Java acordar,
+            responder e voltar para casa.
+          </p>
+          <button class="test-button" type="button" id="testButton">
+            <span>Testar resposta</span>
+            <span class="button-arrow" aria-hidden="true">↗</span>
+          </button>
+        </div>
+
+        <div class="signal" aria-label="Estado do servidor">
+          <div class="orb">
+            <div class="orb-ring ring-one"></div>
+            <div class="orb-ring ring-two"></div>
+            <div class="orb-core" id="orbCore">
+              <span id="statusCode">—</span>
+              <small id="statusLabel">aguardando</small>
+            </div>
+          </div>
+          <div class="signal-caption">
+            <span>GET /hello</span>
+            <span id="latency">tempo —</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="console" aria-label="Painel de resposta">
+        <div class="console-head">
+          <span><i></i> terminal</span>
+          <span id="consoleTime">pronto</span>
+        </div>
+        <div class="console-body">
+          <div class="prompt" aria-hidden="true">$</div>
+          <p id="consoleText">curl http://localhost:8080/hello</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const button = document.querySelector("#testButton");
+      const code = document.querySelector("#statusCode");
+      const label = document.querySelector("#statusLabel");
+      const latency = document.querySelector("#latency");
+      const consoleText = document.querySelector("#consoleText");
+      const consoleTime = document.querySelector("#consoleTime");
+      const orbCore = document.querySelector("#orbCore");
+
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.classList.add("is-running");
+        code.textContent = "...";
+        label.textContent = "conectando";
+        consoleText.textContent = "GET /hello ...";
+        const started = performance.now();
+
+        try {
+          const response = await fetch("/hello");
+          const body = await response.text();
+          const elapsed = Math.round(performance.now() - started);
+
+          code.textContent = response.status;
+          label.textContent = response.ok ? "servidor vivo" : "resposta alerta";
+          latency.textContent = `${elapsed} ms`;
+          consoleText.textContent = `${response.status} OK  ·  "${body}"`;
+          consoleTime.textContent = new Intl.DateTimeFormat("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          }).format(new Date());
+          orbCore.classList.toggle("is-error", !response.ok);
+        } catch (error) {
+          code.textContent = "ERR";
+          label.textContent = "sem conexão";
+          latency.textContent = "tempo —";
+          consoleText.textContent = "Falha ao alcançar /hello";
+          orbCore.classList.add("is-error");
+        } finally {
+          button.disabled = false;
+          button.classList.remove("is-running");
+        }
+      });
+    </script>
+  </body>
+</html>
